@@ -68,7 +68,7 @@ export default function Chatbot() {
       setSendingLead(true);
 
       const res = await fetch(
-        "https://amarsolutions-backend.onrender.com/api/contact",
+        "https://amarsolutions-1.onrender.com/api/contact",
         {
           method: "POST",
           headers: {
