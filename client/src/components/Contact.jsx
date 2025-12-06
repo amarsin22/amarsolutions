@@ -24,7 +24,7 @@ export default function Contact() {
 
     // ✅ Timeout protection (15 seconds)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     try {
       const res = await fetch(
