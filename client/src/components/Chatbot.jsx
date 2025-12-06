@@ -56,6 +56,7 @@ export default function Chatbot() {
     setInput("");
   };
 
+  // ✅ FAST, NON-HANGING SUBMIT
   const handleLeadSubmit = async (e) => {
     e.preventDefault();
 
@@ -63,6 +64,8 @@ export default function Chatbot() {
       alert("Name and email are required.");
       return;
     }
+
+    if (sendingLead) return; // ✅ prevent double clicks
 
     try {
       setSendingLead(true);
@@ -85,13 +88,18 @@ export default function Chatbot() {
         }
       );
 
-      const data = await res.json();
+      // ✅ Safe JSON read (prevents UI freeze)
+      const data = await res.json().catch(() => ({
+        message: "Invalid server response",
+      }));
 
       if (!res.ok) {
         console.error("Backend Error:", data);
-        throw new Error(data.message || "Failed to submit lead");
+        alert(data.message || "Failed to submit lead");
+        return;
       }
 
+      // ✅ Instant UI feedback
       addMessage(
         "bot",
         "✅ Thank you! Your details have been shared. Amar will contact you soon."
@@ -102,7 +110,7 @@ export default function Chatbot() {
       setOpen(false);
     } catch (error) {
       console.error("Frontend Error:", error.message);
-      alert(error.message || "Server error. Please try again.");
+      alert("❌ Server is slow. Please try again.");
     } finally {
       setSendingLead(false);
     }
