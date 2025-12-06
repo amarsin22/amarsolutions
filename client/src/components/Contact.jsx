@@ -22,9 +22,9 @@ export default function Contact() {
 
     setLoading(true);
 
-    // ✅ Timeout protection (15 seconds)
+    // ✅ SAFE timeout: 5 seconds
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     try {
       const res = await fetch(
@@ -39,9 +39,10 @@ export default function Contact() {
         }
       );
 
-      clearTimeout(timeoutId);
-
-      const data = await res.json();
+      // ✅ Safely read response
+      const data = await res.json().catch(() => ({
+        message: "Invalid server response",
+      }));
 
       if (!res.ok) {
         console.error("Backend Error:", data);
@@ -66,6 +67,7 @@ export default function Contact() {
         alert("❌ Server is not responding. Try again later.");
       }
     } finally {
+      clearTimeout(timeoutId); // ✅ always clear timeout
       setLoading(false);
     }
   };

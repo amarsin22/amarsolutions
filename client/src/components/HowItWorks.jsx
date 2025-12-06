@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-
 const steps = [
   "You contact me with your requirement (resume, LinkedIn, project, etc.).",
   "I review your current profile and share a clear plan with pricing.",
