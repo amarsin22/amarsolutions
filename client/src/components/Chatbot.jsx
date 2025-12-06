@@ -47,8 +47,8 @@ export default function Chatbot() {
     if (!input.trim()) return;
 
     addMessage("user", input);
-    const reply = getBotReply(input);
 
+    const reply = getBotReply(input);
     setTimeout(() => {
       addMessage("bot", reply);
     }, 400);
@@ -85,10 +85,11 @@ export default function Chatbot() {
         }
       );
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error("Backend Error:", errorText);
-        throw new Error(errorText);
+        console.error("Backend Error:", data);
+        throw new Error(data.message || "Failed to submit lead");
       }
 
       addMessage(
@@ -98,9 +99,10 @@ export default function Chatbot() {
 
       setLead({ name: "", email: "", whatsapp: "" });
       setLeadMode(false);
+      setOpen(false);
     } catch (error) {
       console.error("Frontend Error:", error.message);
-      alert(error.message);
+      alert(error.message || "Server error. Please try again.");
     } finally {
       setSendingLead(false);
     }
@@ -117,10 +119,18 @@ export default function Chatbot() {
 
       <AnimatePresence>
         {open && (
-          <motion.div className="fixed bottom-20 left-4 w-80 bg-black rounded-xl p-3 text-white">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-20 left-4 w-80 bg-black rounded-xl p-3 text-white"
+          >
             <div className="h-48 overflow-y-auto space-y-2">
               {messages.map((m, i) => (
-                <div key={i} className={m.from === "user" ? "text-right" : "text-left"}>
+                <div
+                  key={i}
+                  className={m.from === "user" ? "text-right" : "text-left"}
+                >
                   <span className="bg-gray-700 px-2 py-1 rounded">
                     {m.text}
                   </span>
@@ -154,9 +164,11 @@ export default function Chatbot() {
                   }
                   className="w-full p-1 text-black"
                 />
+
                 <button
+                  type="submit"
                   disabled={sendingLead}
-                  className="w-full bg-green-600 py-1 rounded"
+                  className="w-full bg-green-600 py-1 rounded disabled:opacity-60"
                 >
                   {sendingLead ? "Sending..." : "Submit"}
                 </button>

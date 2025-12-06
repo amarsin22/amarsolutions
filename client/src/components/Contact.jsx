@@ -22,6 +22,10 @@ export default function Contact() {
 
     setLoading(true);
 
+    // ✅ Timeout protection (15 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       const res = await fetch(
         "https://amarsolutions-1.onrender.com/api/contact",
@@ -31,19 +35,21 @@ export default function Contact() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(form),
+          signal: controller.signal,
         }
       );
 
-      const data = await res.json(); // ✅ to read backend error message
+      clearTimeout(timeoutId);
+
+      const data = await res.json();
 
       if (!res.ok) {
         console.error("Backend Error:", data);
         alert(data.message || "Server rejected the request");
-        setLoading(false);
         return;
       }
 
-      alert("Message sent successfully!");
+      alert("✅ Message sent successfully!");
 
       setForm({
         name: "",
@@ -52,10 +58,13 @@ export default function Contact() {
         service: "Resume Writing",
         message: "",
       });
-
     } catch (error) {
-      console.error("Network Error:", error);
-      alert("Server is not responding. Try again later.");
+      if (error.name === "AbortError") {
+        alert("⏳ Server timeout. Please try again.");
+      } else {
+        console.error("Network Error:", error);
+        alert("❌ Server is not responding. Try again later.");
+      }
     } finally {
       setLoading(false);
     }
