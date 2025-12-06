@@ -20,7 +20,7 @@ app.use(express.json());
 // ✅ Safe CORS (works for dev + production)
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: process.env.CLIENT_URL || "https://amarsolutions.vercel.app/",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
