@@ -10,6 +10,8 @@ export default function Contact() {
     message: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -18,27 +20,44 @@ export default function Contact() {
       return;
     }
 
+    setLoading(true);
+
     try {
-      const res = await fetch("https://amarsolutions-backend.onrender.com/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+      const res = await fetch(
+        "https://amarsolutions-backend.onrender.com/api/contact",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(form),
+        }
+      );
+
+      const data = await res.json(); // ✅ to read backend error message
+
+      if (!res.ok) {
+        console.error("Backend Error:", data);
+        alert(data.message || "Server rejected the request");
+        setLoading(false);
+        return;
+      }
+
+      alert("Message sent successfully!");
+
+      setForm({
+        name: "",
+        email: "",
+        whatsapp: "",
+        service: "Resume Writing",
+        message: "",
       });
 
-      if (res.ok) {
-        alert("Message sent successfully!");
-        setForm({
-          name: "",
-          email: "",
-          whatsapp: "",
-          service: "Resume Writing",
-          message: "",
-        });
-      } else {
-        alert("Failed to send message.");
-      }
     } catch (error) {
-      alert("Server error. Try again later.");
+      console.error("Network Error:", error);
+      alert("Server is not responding. Try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,9 +71,7 @@ export default function Contact() {
         onSubmit={handleSubmit}
         className="bg-slate-50 text-slate-900 rounded-2xl p-7 shadow-soft space-y-4 max-w-md mx-auto"
       >
-        <h2 className="text-xl font-bold text-center mb-2">
-          Contact Me
-        </h2>
+        <h2 className="text-xl font-bold text-center mb-2">Contact Me</h2>
 
         <input
           placeholder="Name"
@@ -88,16 +105,15 @@ export default function Contact() {
           onChange={(e) => setForm({ ...form, message: e.target.value })}
         />
 
-        {/* ✅ SUBMIT BUTTON (FIXED & VISIBLE) */}
         <motion.button
-  type="submit"
-  whileHover={{ scale: 1.05 }}
-  whileTap={{ scale: 0.95 }}
-  className="w-full bg-gradient-to-r from-indigo-600 to-blue-500 text-white py-3 rounded-full text-sm font-semibold shadow-lg hover:opacity-90 transition cursor-pointer"
->
-  Send Message
-</motion.button>
-
+          type="submit"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          disabled={loading}
+          className="w-full bg-gradient-to-r from-indigo-600 to-blue-500 text-white py-3 rounded-full text-sm font-semibold shadow-lg hover:opacity-90 transition cursor-pointer disabled:opacity-60"
+        >
+          {loading ? "Sending..." : "Send Message"}
+        </motion.button>
       </motion.form>
     </section>
   );

@@ -17,17 +17,29 @@ const app = express();
 
 app.use(express.json());
 
-// ✅ Correct & Safe CORS for Vercel + Localhost
+// ✅ Bulletproof CORS for Vercel + Local + Render
+const allowedOrigins = [
+  "https://amarsolutions.vercel.app",
+  "https://amarsolutions.vercel.app/",
+  "http://localhost:5173",
+];
+
 app.use(
   cors({
-    origin: [
-      "https://amarsolutions.vercel.app", // ✅ Vercel Frontend
-      "http://localhost:5173",            // ✅ Local Dev
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed: " + origin));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
+
+// ✅ Handle preflight requests explicitly
+app.options("*", cors());
 
 /* =========================
    ROUTES
