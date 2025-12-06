@@ -15,8 +15,6 @@ export default function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (loading) return; // ✅ prevent double submit
-
     if (!form.name || !form.email) {
       alert("Name and Email are required!");
       return;
@@ -32,16 +30,13 @@ export default function Contact() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            ...form,
-            service: form.service || "Resume Writing", // ✅ always send service
-          }),
+          body: JSON.stringify(form),
         }
       );
 
       let data;
       try {
-        data = await res.json(); // ✅ safe JSON read
+        data = await res.json(); // safe JSON read
       } catch {
         data = { message: "Invalid server response" };
       }
