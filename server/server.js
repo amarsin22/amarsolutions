@@ -17,7 +17,7 @@ const app = express();
 
 app.use(express.json());
 
-// ✅ Bulletproof CORS for Vercel + Local + Render
+// ✅ Bulletproof CORS for Vercel + Local + Render (Node 22 Safe)
 const allowedOrigins = [
   "https://amarsolutions.vercel.app",
   "https://amarsolutions.vercel.app/",
@@ -38,8 +38,7 @@ app.use(
   })
 );
 
-// ✅ Handle preflight requests explicitly
-app.options("*", cors());
+// ✅ DO NOT USE app.options("*", cors()); — it crashes Node 22
 
 /* =========================
    ROUTES
