@@ -22,10 +22,6 @@ export default function Contact() {
 
     setLoading(true);
 
-    // ✅ SAFE timeout: 5 seconds
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-
     try {
       const res = await fetch(
         "https://amarsolutions-1.onrender.com/api/contact",
@@ -35,14 +31,15 @@ export default function Contact() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(form),
-          signal: controller.signal,
         }
       );
 
-      // ✅ Safely read response
-      const data = await res.json().catch(() => ({
-        message: "Invalid server response",
-      }));
+      let data;
+      try {
+        data = await res.json(); // safe JSON read
+      } catch {
+        data = { message: "Invalid server response" };
+      }
 
       if (!res.ok) {
         console.error("Backend Error:", data);
@@ -60,14 +57,9 @@ export default function Contact() {
         message: "",
       });
     } catch (error) {
-      if (error.name === "AbortError") {
-        alert("⏳ Server timeout. Please try again.");
-      } else {
-        console.error("Network Error:", error);
-        alert("❌ Server is not responding. Try again later.");
-      }
+      console.error("Network Error:", error);
+      alert("❌ Server is not responding. Please try again.");
     } finally {
-      clearTimeout(timeoutId); // ✅ always clear timeout
       setLoading(false);
     }
   };
