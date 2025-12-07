@@ -8,7 +8,6 @@ import contactRoutes from "./routes/contactRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
-
 const app = express();
 
 /* =========================
@@ -17,39 +16,40 @@ const app = express();
 
 app.use(express.json());
 
-// ✅ Bulletproof CORS for Vercel + Local + Render (Node 22 Safe)
-const allowedOrigins = [
-  "https://amarsolutions.vercel.app",
-  "https://amarsolutions.vercel.app/",
-  "http://localhost:5173",
-];
-
+// ⭐ MOST STABLE CORS FOR RENDER FREE TIER ⭐
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed: " + origin));
-      }
-    },
+    origin: [
+      "https://amarsolutions.vercel.app",
+      "http://localhost:5173"
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
 
-// ✅ DO NOT USE app.options("*", cors()); — it crashes Node 22
+// ⭐ Fix for Node 22 + Render preflight requests
+app.options("*", cors());
 
 /* =========================
    ROUTES
 ========================= */
 
 app.get("/", (req, res) => {
-  res.send("✅ AmarSolutions Backend Running");
+  res.send("✅ AmarSolutions Backend Running on Render");
 });
 
 app.use("/api/contact", contactRoutes);
 app.use("/api/admin", adminRoutes);
+
+/* =========================
+   ERROR HANDLER
+========================= */
+
+app.use((err, req, res, next) => {
+  console.error("🔥 INTERNAL ERROR:", err.message);
+  res.status(500).json({ success: false, message: "Server Error" });
+});
 
 /* =========================
    DATABASE + SERVER
@@ -63,7 +63,7 @@ mongoose
     console.log("✅ MongoDB Connected");
 
     app.listen(PORT, () => {
-      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   })
   .catch((err) => {
