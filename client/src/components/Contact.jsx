@@ -24,7 +24,7 @@ export default function Contact() {
 
     try {
       const res = await fetch(
-        "https://amarsolutions-1.onrender.com/api/contact",
+        "https://amarsolutions-2.onrender.com/api/contact",
         {
           method: "POST",
           headers: {
