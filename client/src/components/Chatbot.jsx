@@ -9,13 +9,10 @@ export default function Chatbot() {
       text: "Hi, I’m your AI assistant from AmarSolutions 👋 How can I help you today?",
     },
   ]);
+
   const [input, setInput] = useState("");
   const [leadMode, setLeadMode] = useState(false);
-  const [lead, setLead] = useState({
-    name: "",
-    email: "",
-    whatsapp: "",
-  });
+  const [lead, setLead] = useState({ name: "", email: "", whatsapp: "" });
   const [sendingLead, setSendingLead] = useState(false);
 
   const ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
@@ -25,21 +22,21 @@ export default function Chatbot() {
   };
 
   const getBotReply = (userText) => {
-    const text = userText.toLowerCase();
+    const t = userText.toLowerCase();
 
-    if (text.includes("service"))
+    if (t.includes("service"))
       return "I offer Resume Writing, LinkedIn Optimization, Frontend Web Development, React Projects, Interview Preparation, and Cold Email Writing.";
 
-    if (text.includes("price"))
-      return "I have Basic, Standard, and Premium pricing plans. Check the Pricing section.";
+    if (t.includes("price"))
+      return "I have Basic, Standard, and Premium pricing plans.";
 
-    if (text.includes("resume")) return "I create ATS-friendly professional resumes.";
-    if (text.includes("linkedin")) return "I optimize LinkedIn profiles so recruiters find you.";
-    if (text.includes("project")) return "I build and fix frontend & React projects.";
-    if (text.includes("interview")) return "I provide interview preparation and mock interviews.";
-    if (text.includes("contact")) return "Click on 'Share my details' to connect with Amar.";
+    if (t.includes("resume")) return "I create ATS-friendly resumes.";
+    if (t.includes("linkedin")) return "I optimize LinkedIn profiles.";
+    if (t.includes("project")) return "I build and debug frontend & React projects.";
+    if (t.includes("interview")) return "I provide interview preparation and mock interviews.";
+    if (t.includes("contact")) return "Click on 'Share my details' to connect with Amar.";
 
-    return "You can ask me about services, pricing, resume, LinkedIn, projects, or interviews.";
+    return "Ask me about services, pricing, resume help, LinkedIn optimization, or projects.";
   };
 
   const handleSend = (e) => {
@@ -47,14 +44,12 @@ export default function Chatbot() {
     if (!input.trim()) return;
 
     addMessage("user", input);
-
     const reply = getBotReply(input);
     setTimeout(() => addMessage("bot", reply), 400);
-
     setInput("");
   };
 
-  // 🚀 FAST — Web3Forms lead submission (NO BACKEND)
+  // 🚀 SEND LEAD USING WEB3FORMS (No backend)
   const handleLeadSubmit = async (e) => {
     e.preventDefault();
 
@@ -64,17 +59,17 @@ export default function Chatbot() {
     }
 
     if (sendingLead) return;
-
     setSendingLead(true);
 
-    // Create lead data for Web3Forms
     const formData = new FormData();
     formData.append("access_key", ACCESS_KEY);
     formData.append("name", lead.name);
     formData.append("email", lead.email);
     formData.append("whatsapp", lead.whatsapp);
     formData.append("service", "Chatbot Lead");
+    formData.append("subject", "New Lead from AmarSolutions Chatbot");
     formData.append("message", "Lead captured from AmarSolutions AI Chatbot");
+    formData.append("botcheck", "");
 
     try {
       const res = await fetch("https://api.web3forms.com/submit", {
@@ -89,14 +84,15 @@ export default function Chatbot() {
           "bot",
           "✅ Thank you! Your details have been shared. Amar will contact you soon."
         );
+
         setLead({ name: "", email: "", whatsapp: "" });
         setLeadMode(false); // hide form
       } else {
-        alert("❌ Unable to send. Please try again.");
+        alert("❌ Unable to send lead. Please try again.");
       }
-    } catch (error) {
+    } catch (err) {
       alert("❌ Network issue. Try again.");
-      console.error(error);
+      console.error("Chatbot lead error:", err);
     } finally {
       setSendingLead(false);
     }
@@ -104,9 +100,10 @@ export default function Chatbot() {
 
   return (
     <>
+      {/* Floating Chat Button */}
       <motion.button
-        onClick={() => setOpen((prev) => !prev)}
-        className="fixed bottom-6 left-6 z-50 bg-primarySoft text-white px-4 py-3 rounded-full"
+        onClick={() => setOpen((p) => !p)}
+        className="fixed bottom-6 left-6 z-50 bg-primarySoft text-white px-4 py-3 rounded-full shadow-lg"
       >
         💬 {open ? "Close Chat" : "Chat with AI"}
       </motion.button>
@@ -117,19 +114,18 @@ export default function Chatbot() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
-            className="fixed bottom-20 left-4 w-80 bg-black rounded-xl p-3 text-white"
+            className="fixed bottom-20 left-4 w-80 bg-black rounded-xl p-3 text-white shadow-lg"
           >
+            {/* CHAT WINDOW */}
             <div className="h-48 overflow-y-auto space-y-2">
               {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={m.from === "user" ? "text-right" : "text-left"}
-                >
-                  <span className="bg-gray-700 px-2 py-1 rounded">{m.text}</span>
+                <div key={i} className={m.from === "user" ? "text-right" : "text-left"}>
+                  <span className="bg-gray-700 px-2 py-1 rounded inline-block">{m.text}</span>
                 </div>
               ))}
             </div>
 
+            {/* LEAD FORM */}
             {leadMode && (
               <form onSubmit={handleLeadSubmit} className="space-y-2 mt-2">
                 <input
@@ -163,21 +159,23 @@ export default function Chatbot() {
               </form>
             )}
 
+            {/* USER INPUT */}
             <form onSubmit={handleSend} className="flex gap-2 mt-2">
               <input
                 className="flex-1 p-1 text-black rounded"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Type..."
+                placeholder="Type…"
               />
               <button className="bg-blue-600 px-3 rounded">Send</button>
             </form>
 
+            {/* CTA: SHARE DETAILS */}
             <button
               onClick={() => setLeadMode((p) => !p)}
               className="text-xs mt-2 underline"
             >
-              {leadMode ? "Hide Form" : "Share my details"}
+              {leadMode ? "Hide form" : "Share my details"}
             </button>
           </motion.div>
         )}

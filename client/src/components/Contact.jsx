@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 
 export default function Contact() {
   const [loading, setLoading] = useState(false);
+
+  // Secure access key from Vercel environment variable
   const ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
 
   const handleSubmit = async (e) => {
@@ -13,28 +15,32 @@ export default function Contact() {
 
     const formData = new FormData(e.target);
     formData.append("access_key", ACCESS_KEY);
+
+    // Email subject + service type
+    formData.append("subject", "New Contact Form Message");
     formData.append("service", "Contact Form Submission");
 
-    // Anti-bot protection (required by Web3Forms)
+    // Required by Web3Forms anti-bot system
     formData.append("botcheck", "");
 
     try {
-      const res = await fetch("https://api.web3forms.com/submit", {
+      const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
         body: formData,
       });
 
-      const data = await res.json().catch(() => ({ success: false }));
+      const data = await response.json().catch(() => ({ success: false }));
 
       if (data.success) {
         alert("✅ Message sent successfully!");
         e.target.reset();
       } else {
-        alert("❌ Something went wrong. Please try again.");
+        alert("❌ Failed to send message. Please try again.");
+        console.error("Web3Forms error:", data);
       }
-    } catch (error) {
-      alert("❌ Network issue. Please try again.");
-      console.error("Submit Error:", error);
+    } catch (err) {
+      alert("❌ Network issue. Try again later.");
+      console.error("Submit error:", err);
     } finally {
       setLoading(false);
     }
@@ -52,6 +58,7 @@ export default function Contact() {
       >
         <h2 className="text-xl font-bold text-center mb-2">Contact Me</h2>
 
+        {/* Name */}
         <input
           name="name"
           placeholder="Name"
@@ -59,6 +66,7 @@ export default function Contact() {
           required
         />
 
+        {/* Email */}
         <input
           name="email"
           type="email"
@@ -67,23 +75,27 @@ export default function Contact() {
           required
         />
 
+        {/* WhatsApp */}
         <input
           name="whatsapp"
-          placeholder="WhatsApp"
+          placeholder="WhatsApp Number (Optional)"
           className="w-full p-2 border rounded-md text-sm"
         />
 
+        {/* Message */}
         <textarea
           name="message"
           placeholder="Tell me briefly what you need help with..."
           className="w-full p-2 border rounded-md text-sm"
           rows={4}
+          required
         ></textarea>
 
-        {/* Web3Forms required hidden inputs */}
-        <input type="hidden" name="botcheck" />
+        {/* Hidden necessary fields */}
+        <input type="hidden" name="botcheck" value="" />
         <input type="hidden" name="service" value="Contact Form Submission" />
 
+        {/* Submit Button */}
         <motion.button
           type="submit"
           whileHover={{ scale: 1.05 }}
