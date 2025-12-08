@@ -18,6 +18,8 @@ export default function Chatbot() {
   });
   const [sendingLead, setSendingLead] = useState(false);
 
+  const ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
+
   const addMessage = (from, text) => {
     setMessages((prev) => [...prev, { from, text }]);
   };
@@ -25,18 +27,16 @@ export default function Chatbot() {
   const getBotReply = (userText) => {
     const text = userText.toLowerCase();
 
-    if (text.includes("service") || text.includes("offer")) {
+    if (text.includes("service"))
       return "I offer Resume Writing, LinkedIn Optimization, Frontend Web Development, React Projects, Interview Preparation, and Cold Email Writing.";
-    }
 
-    if (text.includes("price") || text.includes("pricing")) {
-      return "I have Basic, Standard, and Premium pricing plans. You can check the Pricing section for details.";
-    }
+    if (text.includes("price"))
+      return "I have Basic, Standard, and Premium pricing plans. Check the Pricing section.";
 
     if (text.includes("resume")) return "I create ATS-friendly professional resumes.";
-    if (text.includes("linkedin")) return "I optimize LinkedIn profiles for recruiters.";
-    if (text.includes("interview")) return "I provide interview preparation with mock questions.";
-    if (text.includes("project")) return "I help with frontend and React projects.";
+    if (text.includes("linkedin")) return "I optimize LinkedIn profiles so recruiters find you.";
+    if (text.includes("project")) return "I build and fix frontend & React projects.";
+    if (text.includes("interview")) return "I provide interview preparation and mock interviews.";
     if (text.includes("contact")) return "Click on 'Share my details' to connect with Amar.";
 
     return "You can ask me about services, pricing, resume, LinkedIn, projects, or interviews.";
@@ -49,14 +49,12 @@ export default function Chatbot() {
     addMessage("user", input);
 
     const reply = getBotReply(input);
-    setTimeout(() => {
-      addMessage("bot", reply);
-    }, 400);
+    setTimeout(() => addMessage("bot", reply), 400);
 
     setInput("");
   };
 
-  // ✅ FAST, NON-HANGING SUBMIT
+  // 🚀 FAST — Web3Forms lead submission (NO BACKEND)
   const handleLeadSubmit = async (e) => {
     e.preventDefault();
 
@@ -65,52 +63,40 @@ export default function Chatbot() {
       return;
     }
 
-    if (sendingLead) return; // ✅ prevent double clicks
+    if (sendingLead) return;
+
+    setSendingLead(true);
+
+    // Create lead data for Web3Forms
+    const formData = new FormData();
+    formData.append("access_key", ACCESS_KEY);
+    formData.append("name", lead.name);
+    formData.append("email", lead.email);
+    formData.append("whatsapp", lead.whatsapp);
+    formData.append("service", "Chatbot Lead");
+    formData.append("message", "Lead captured from AmarSolutions AI Chatbot");
 
     try {
-      setSendingLead(true);
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        body: formData,
+      });
 
-      const res = await fetch(
-        "https://amarsolutions-2.onrender.com/api/contact",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: lead.name,
-            email: lead.email,
-            whatsapp: lead.whatsapp,
-            service: "Chatbot Lead",
-            message:
-              "Lead captured from AI Chatbot on AmarSolutions website.",
-          }),
-        }
-      );
+      const result = await res.json().catch(() => ({ success: false }));
 
-      // ✅ Safe JSON read (prevents UI freeze)
-      const data = await res.json().catch(() => ({
-        message: "Invalid server response",
-      }));
-
-      if (!res.ok) {
-        console.error("Backend Error:", data);
-        alert(data.message || "Failed to submit lead");
-        return;
+      if (result.success) {
+        addMessage(
+          "bot",
+          "✅ Thank you! Your details have been shared. Amar will contact you soon."
+        );
+        setLead({ name: "", email: "", whatsapp: "" });
+        setLeadMode(false); // hide form
+      } else {
+        alert("❌ Unable to send. Please try again.");
       }
-
-      // ✅ Instant UI feedback
-      addMessage(
-        "bot",
-        "✅ Thank you! Your details have been shared. Amar will contact you soon."
-      );
-
-      setLead({ name: "", email: "", whatsapp: "" });
-      setLeadMode(false);
-      setOpen(false);
     } catch (error) {
-      console.error("Frontend Error:", error.message);
-      alert("❌ Server is slow. Please try again.");
+      alert("❌ Network issue. Try again.");
+      console.error(error);
     } finally {
       setSendingLead(false);
     }
@@ -128,9 +114,9 @@ export default function Chatbot() {
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
+            exit={{ opacity: 0, y: 40 }}
             className="fixed bottom-20 left-4 w-80 bg-black rounded-xl p-3 text-white"
           >
             <div className="h-48 overflow-y-auto space-y-2">
@@ -139,9 +125,7 @@ export default function Chatbot() {
                   key={i}
                   className={m.from === "user" ? "text-right" : "text-left"}
                 >
-                  <span className="bg-gray-700 px-2 py-1 rounded">
-                    {m.text}
-                  </span>
+                  <span className="bg-gray-700 px-2 py-1 rounded">{m.text}</span>
                 </div>
               ))}
             </div>
@@ -151,26 +135,22 @@ export default function Chatbot() {
                 <input
                   placeholder="Name"
                   value={lead.name}
-                  onChange={(e) =>
-                    setLead({ ...lead, name: e.target.value })
-                  }
-                  className="w-full p-1 text-black"
+                  onChange={(e) => setLead({ ...lead, name: e.target.value })}
+                  className="w-full p-1 text-black rounded"
                 />
+
                 <input
                   placeholder="Email"
                   value={lead.email}
-                  onChange={(e) =>
-                    setLead({ ...lead, email: e.target.value })
-                  }
-                  className="w-full p-1 text-black"
+                  onChange={(e) => setLead({ ...lead, email: e.target.value })}
+                  className="w-full p-1 text-black rounded"
                 />
+
                 <input
                   placeholder="WhatsApp"
                   value={lead.whatsapp}
-                  onChange={(e) =>
-                    setLead({ ...lead, whatsapp: e.target.value })
-                  }
-                  className="w-full p-1 text-black"
+                  onChange={(e) => setLead({ ...lead, whatsapp: e.target.value })}
+                  className="w-full p-1 text-black rounded"
                 />
 
                 <button
@@ -185,19 +165,19 @@ export default function Chatbot() {
 
             <form onSubmit={handleSend} className="flex gap-2 mt-2">
               <input
-                className="flex-1 p-1 text-black"
+                className="flex-1 p-1 text-black rounded"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type..."
               />
-              <button className="bg-blue-600 px-3">Send</button>
+              <button className="bg-blue-600 px-3 rounded">Send</button>
             </form>
 
             <button
               onClick={() => setLeadMode((p) => !p)}
               className="text-xs mt-2 underline"
             >
-              {leadMode ? "Hide form" : "Share my details"}
+              {leadMode ? "Hide Form" : "Share my details"}
             </button>
           </motion.div>
         )}

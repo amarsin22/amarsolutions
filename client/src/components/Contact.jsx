@@ -2,63 +2,39 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 
 export default function Contact() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    whatsapp: "",
-    service: "Resume Writing",
-    message: "",
-  });
-
   const [loading, setLoading] = useState(false);
+  const ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!form.name || !form.email) {
-      alert("Name and Email are required!");
-      return;
-    }
+    if (loading) return;
 
     setLoading(true);
 
+    const formData = new FormData(e.target);
+    formData.append("access_key", ACCESS_KEY);
+    formData.append("service", "Contact Form Submission");
+
+    // Anti-bot protection (required by Web3Forms)
+    formData.append("botcheck", "");
+
     try {
-      const res = await fetch(
-        "https://amarsolutions-2.onrender.com/api/contact",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(form),
-        }
-      );
-
-      let data;
-      try {
-        data = await res.json(); // safe JSON read
-      } catch {
-        data = { message: "Invalid server response" };
-      }
-
-      if (!res.ok) {
-        console.error("Backend Error:", data);
-        alert(data.message || "Server rejected the request");
-        return;
-      }
-
-      alert("✅ Message sent successfully!");
-
-      setForm({
-        name: "",
-        email: "",
-        whatsapp: "",
-        service: "Resume Writing",
-        message: "",
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        body: formData,
       });
+
+      const data = await res.json().catch(() => ({ success: false }));
+
+      if (data.success) {
+        alert("✅ Message sent successfully!");
+        e.target.reset();
+      } else {
+        alert("❌ Something went wrong. Please try again.");
+      }
     } catch (error) {
-      console.error("Network Error:", error);
-      alert("❌ Server is not responding. Please try again.");
+      alert("❌ Network issue. Please try again.");
+      console.error("Submit Error:", error);
     } finally {
       setLoading(false);
     }
@@ -67,46 +43,46 @@ export default function Contact() {
   return (
     <section id="contact" className="section">
       <motion.form
+        onSubmit={handleSubmit}
         initial={{ scale: 0.9, opacity: 0 }}
         whileInView={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5 }}
         viewport={{ once: true }}
-        onSubmit={handleSubmit}
         className="bg-slate-50 text-slate-900 rounded-2xl p-7 shadow-soft space-y-4 max-w-md mx-auto"
       >
         <h2 className="text-xl font-bold text-center mb-2">Contact Me</h2>
 
         <input
+          name="name"
           placeholder="Name"
           className="w-full p-2 border rounded-md text-sm"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
           required
         />
 
         <input
-          placeholder="Email"
+          name="email"
           type="email"
+          placeholder="Email"
           className="w-full p-2 border rounded-md text-sm"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
           required
         />
 
         <input
+          name="whatsapp"
           placeholder="WhatsApp"
           className="w-full p-2 border rounded-md text-sm"
-          value={form.whatsapp}
-          onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
         />
 
         <textarea
+          name="message"
           placeholder="Tell me briefly what you need help with..."
           className="w-full p-2 border rounded-md text-sm"
           rows={4}
-          value={form.message}
-          onChange={(e) => setForm({ ...form, message: e.target.value })}
-        />
+        ></textarea>
+
+        {/* Web3Forms required hidden inputs */}
+        <input type="hidden" name="botcheck" />
+        <input type="hidden" name="service" value="Contact Form Submission" />
 
         <motion.button
           type="submit"
